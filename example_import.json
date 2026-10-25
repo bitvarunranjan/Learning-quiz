@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "title": "Quadratic Equations Practice",
+  "pathway": "school",
+  "curriculum": "CBSE",
+  "grade": "10",
+  "subject": "Mathematics",
+  "coverage": "topic",
+  "topics": ["Quadratic Equations"],
+  "mode": "practice",
+  "duration_seconds": null,
+  "questions": [
+    {
+      "external_id": "QE-001",
+      "type": "single_select",
+      "stem": "What are the roots of x² − 5x + 6 = 0?",
+      "difficulty": "easy",
+      "options": [
+        {"key": "A", "text": "1 and 6"},
+        {"key": "B", "text": "2 and 3"},
+        {"key": "C", "text": "−2 and −3"},
+        {"key": "D", "text": "−1 and −6"}
+      ],
+      "correct_option": "B",
+      "explanation": "Factor x² − 5x + 6 as (x − 2)(x − 3), so the roots are 2 and 3.",
+      "tags": ["factorisation", "roots"],
+      "review_status": "pending"
+    }
+  ]
+}
