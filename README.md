@@ -16,7 +16,9 @@ python3 -m http.server 8000
 
 Open **Cloud Tutor · Guided practice** at the top. Sign in with a Supabase email
 account or select Create account. If email confirmation is enabled, confirm your
-email before signing in. Select **Combining groups**, then Start lesson. Incorrect
+email before signing in. Use **Resend confirmation** if needed. Confirmation links
+return to the deployed page; credentials are removed from the return URL and you
+sign in with your password. Select **Combining groups**, then Start lesson. Incorrect
 responses move through a hint, explanation and remediation. A correct response
 asks you to check your reasoning; another consecutive correct response completes
 practice. Recent cloud sessions can be resumed after signing in again.
@@ -214,3 +216,6 @@ The integration is published on the feat/learnloop-tie-v01 review branch.
 Main and website hosting are separate from this review branch. The GitHub
 connector still lacks app-installation access; publishing used the signed-in
 GitHub browser session. See PUBLISHING.md for future publishing options.
+
+Live signup/login/lesson verification and subsequent authentication fixes are
+recorded in LIVE_E2E_RESULTS.md.

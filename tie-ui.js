@@ -2,6 +2,9 @@
   'use strict';
   const host = document.getElementById('tieCloudHost');
   const client = new TieClient(LEARNLOOP_CLOUD.url, LEARNLOOP_CLOUD.publishableKey);
+  const returnTo = location.origin + location.pathname;
+  const authReturn = TieClient.authReturn(location.href);
+  if (authReturn) history.replaceState(null, '', authReturn.cleanURL);
   const node = id => document.getElementById(id);
   let sessionId = null, pendingStart = null, pendingSubmit = null, busy = false;
   // A network retry retains exactly the same UUID and body. No progress comes from the browser.
@@ -11,7 +14,8 @@
       <div class="field"><label for="tieEmail">Email</label><input id="tieEmail" type="email" autocomplete="username" required></div>
       <div class="field"><label for="tiePassword">Password</label><input id="tiePassword" type="password" autocomplete="current-password" minlength="8" required></div>
     </div><div class="row"><button class="btn" type="submit">Sign in</button>
-      <button class="btn secondary" id="tieSignup" type="button">Create account</button></div></form>
+      <button class="btn secondary" id="tieSignup" type="button">Create account</button>
+      <button class="btn secondary" id="tieResend" type="button">Resend confirmation</button></div></form>
     <div id="tieWorkspace" hidden>
       <div class="row"><button class="btn secondary" id="tieSignout">Sign out of Cloud Tutor</button>
         <button class="btn secondary" id="tieRefresh">Refresh lessons and history</button></div>
@@ -79,10 +83,18 @@
   node('tieSignup').addEventListener('click', () => {
     if (!node('tieAuth').reportValidity()) return;
     run(async () => {
-      const signedIn = await client.signUp(node('tieEmail').value.trim(), node('tiePassword').value);
+      const signedIn = await client.signUp(node('tieEmail').value.trim(), node('tiePassword').value, returnTo);
       node('tiePassword').value = '';
       if (signedIn) { loggedIn(true); await refresh(); status('Account ready. Choose a lesson.'); }
       else status('Check your email to confirm your account, then sign in here.');
+    });
+  });
+  node('tieResend').addEventListener('click', () => {
+    if (!node('tieEmail').reportValidity()) return;
+    run(async () => {
+      await client.resendConfirmation(node('tieEmail').value.trim(), returnTo);
+      node('tiePassword').value = '';
+      status('If an account needs confirmation, a new link has been requested. Check your email.');
     });
   });
   node('tieSignout').addEventListener('click', () => run(async () => {
@@ -111,4 +123,8 @@
     status(decision.mastered ? 'Practice complete. Repeated correctness is a practice signal.' : 'Response saved.');
     await refresh();
   }); });
+  if (authReturn) {
+    document.getElementById('tieCloud').open = true;
+    status(authReturn.message);
+  }
 })();

@@ -26,7 +26,24 @@
           body: JSON.stringify(body)
         });
         if (!res.ok) {
-          const err = new Error(res.status === 401 ? 'Please sign in again.' : `Request failed (${res.status}).`);
+          let details = {};
+          try { details = await res.json(); } catch (_) { /* Keep a safe fallback for non-JSON errors. */ }
+          const code = typeof details?.error_code === 'string' ? details.error_code : details?.code;
+          const messages = new Map([
+            ['invalid_credentials', 'Email or password is incorrect.'],
+            ['email_not_confirmed', 'Confirm your email before signing in.'],
+            ['email_address_invalid', 'Enter a valid email address.'],
+            ['email_address_not_authorized', 'Confirmation email delivery is restricted. Contact the LearnLoop owner.'],
+            ['email_provider_disabled', 'Email account creation is currently disabled.'],
+            ['signup_disabled', 'Account creation is currently disabled.'],
+            ['weak_password', 'Choose a stronger password with at least eight characters.'],
+            ['over_email_send_rate_limit', 'Too many confirmation emails requested. Please wait before trying again.']
+          ]);
+          // Never echo arbitrary server messages, HTML, email addresses or tokens.
+          const known = path.startsWith('/auth/v1/') ? messages.get(code) : null;
+          const fallback = res.status === 429 ? 'Too many requests. Please wait a few minutes and try again.' :
+            res.status === 401 ? 'Please sign in again.' : `Request failed (${res.status}).`;
+          const err = new Error(known || fallback);
           err.status = res.status; throw err;
         }
         if (res.status === 204) return null;
@@ -41,10 +58,37 @@
       const data = await this.request('/auth/v1/token?grant_type=password', {email, password});
       this.auth = data; return data.user;
     }
-    async signUp(email, password) {
-      const data = await this.request('/auth/v1/signup', {email, password});
+    static redirectQuery(redirectTo) {
+      if (!redirectTo) return '';
+      const target = new URL(redirectTo);
+      const local = target.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(target.hostname);
+      if ((!local && target.protocol !== 'https:') || target.username || target.password) {
+        throw new Error('Expected an HTTPS confirmation return URL.');
+      }
+      return '?redirect_to=' + encodeURIComponent(target.origin + target.pathname);
+    }
+    static authReturn(href) {
+      const url = new URL(href);
+      const hash = new URLSearchParams(url.hash.slice(1));
+      const keys = ['access_token','refresh_token','expires_at','expires_in','token_type','type',
+        'error','error_code','error_description','code','token_hash'];
+      const hasReturn = ['access_token','refresh_token','error','error_code'].some(k => hash.has(k)) ||
+        ['error','error_code','code','token_hash'].some(k => url.searchParams.has(k));
+      if (!hasReturn) return null;
+      const failed = hash.has('error') || hash.has('error_code') || url.searchParams.has('error') || url.searchParams.has('error_code');
+      for (const key of keys) { hash.delete(key); url.searchParams.delete(key); }
+      url.hash = hash.toString();
+      return {cleanURL: url.href, message: failed ?
+        'This confirmation link is invalid or expired. Try signing in or resend confirmation.' :
+        'Confirmation link opened. Sign in to continue.'};
+    }
+    async signUp(email, password, redirectTo) {
+      const data = await this.request('/auth/v1/signup' + TieClient.redirectQuery(redirectTo), {email, password});
       this.auth = data.access_token ? data : null;
       return Boolean(this.auth);
+    }
+    async resendConfirmation(email, redirectTo) {
+      return this.request('/auth/v1/resend' + TieClient.redirectQuery(redirectTo), {type: 'signup', email});
     }
     async token() {
       if (!this.auth) throw new Error('Please sign in.');
