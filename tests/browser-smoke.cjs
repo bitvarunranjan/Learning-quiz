@@ -14,12 +14,15 @@ const root = path.resolve(__dirname, '..');
   browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{})});
   const page=await browser.newPage({viewport:{width:1100,height:900}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  let attempts=0,failOnce=true,submitted=[];
+  let attempts=0,failOnce=true,submitted=[],signupReturn=null;
   const sid='5d8df718-fb1b-4a3d-8e96-570a8bc23ae6';
   const initial={action:'diagnose',message:'What is two plus two?',reason:'initial_diagnosis',attempt_count:0,mastered:false};let latest=initial;
   await page.route('https://oxsztvxpwuwlkowlgtwk.supabase.co/**',async route=>{
    const url=route.request().url(),body=route.request().postDataJSON();let data;
-   if(url.includes('/auth/v1/token'))data={access_token:'mock-token',refresh_token:'mock-refresh',expires_at:Date.now()/1000+3600,user:{id:'mock-user'}};
+   if(url.includes('/auth/v1/signup')){signupReturn=new URL(url).searchParams.get('redirect_to');data={user:{id:'mock-user'}};}
+   else if(url.includes('/auth/v1/resend'))data={};
+   else if(url.includes('/auth/v1/token')&&body.password==='wrong-password'){await route.fulfill({status:400,json:{error_code:'invalid_credentials',msg:'private error detail'}});return;}
+   else if(url.includes('/auth/v1/token'))data={access_token:'mock-token',refresh_token:'mock-refresh',expires_at:Date.now()/1000+3600,user:{id:'mock-user'}};
    else if(url.endsWith('/tie_lessons'))data=[{id:'addition-demo',title:'Combining groups'}];
    else if(url.endsWith('/tie_history'))data=attempts?[{session_id:sid,lesson_id:'addition-demo',attempt_count:attempts,mastered:latest.mastered}]:[];
    else if(url.endsWith('/tie_start'))data={session_id:sid,decision:initial};
@@ -30,9 +33,18 @@ const root = path.resolve(__dirname, '..');
    }else if(url.includes('/logout')){await route.fulfill({status:204});return;}else throw new Error('Unexpected request '+url);
    await route.fulfill({json:data});
   });
-  await page.goto(`http://127.0.0.1:${server.address().port}/`);
-  await page.locator('#tieCloud summary').click();
+  await page.goto(`http://127.0.0.1:${server.address().port}/#access_token=callback-secret&refresh_token=callback-refresh&type=signup`);
+  assert.equal(new URL(page.url()).hash,'');
+  await page.getByText('Confirmation link opened. Sign in to continue.',{exact:true}).waitFor();
+  if(await page.locator('#tieCloud').getAttribute('open')===null)await page.locator('#tieCloud summary').click();
   await page.locator('#tieEmail').fill('test@example.invalid');await page.locator('#tiePassword').fill('mock-password');
+  await page.locator('#tieSignup').click();await page.getByText('Check your email to confirm your account, then sign in here.',{exact:true}).waitFor();
+  assert.equal(signupReturn,`http://127.0.0.1:${server.address().port}/`);
+  await page.locator('#tiePassword').fill('wrong-password');await page.locator('#tieAuth button[type=submit]').click();
+  await page.getByText('Email or password is incorrect.',{exact:true}).waitFor();
+  await page.locator('#tieResend').click();
+  await page.getByText('If an account needs confirmation, a new link has been requested. Check your email.',{exact:true}).waitFor();
+  await page.locator('#tiePassword').fill('mock-password');
   await page.locator('#tieAuth button[type=submit]').click();await page.getByText('Choose a lesson or resume a session.',{exact:true}).waitFor();
   assert.equal(await page.locator('#tiePassword').inputValue(),'');
   await page.locator('#tieStart').click();await page.getByText('Lesson started.',{exact:true}).waitFor();
@@ -56,6 +68,6 @@ const root = path.resolve(__dirname, '..');
   assert.deepEqual(errors,[]);await page.setViewportSize({width:390,height:844});await page.locator('#tieCloud summary').click();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
   if(process.env.SCREENSHOT_PATH)await page.screenshot({path:process.env.SCREENSHOT_PATH,fullPage:true});
-  console.log('PASS: browser sign-in, start, retry, verification, resume, sign-out, token storage, offline quiz regression, mobile layout; no uncaught page errors.');
+  console.log('PASS: browser signup redirect, callback cleanup, safe invalid-login feedback, sign-in, start, retry, verification, resume, sign-out, token storage, offline quiz regression, mobile layout; no uncaught page errors.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});
