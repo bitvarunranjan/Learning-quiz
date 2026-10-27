@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "learnloop-tie"
+version = "0.1.0"
+description = "Deterministic offline LearnLoop tutor policy engine"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["learnloop_tie*"]
