@@ -79,3 +79,9 @@ The Supabase additions above are live. No GitHub Pages/hosting deployment or
 production launch is claimed. All 13 deployed TIE function bodies were compared
 with the consolidated SQL source by body hash and matched. The ZIP's extracted
 copy passed the same Python and Node suites, and its CRC integrity check passed.
+
+## Subsequent live authentication verification
+
+The initial live-auth limitations above are superseded by LIVE_E2E_RESULTS.md,
+which records the later real signup, password login, lesson persistence tests,
+confirmation-redirect correction and safe login-error handling.

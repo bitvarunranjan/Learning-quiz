@@ -55,3 +55,44 @@ test('RPC rejection of expired JWT clears sign-in state',async()=>{
   const c=new TieClient('https://a.com',key,async()=>({ok:false,status:401}));c.auth=auth();
   await assert.rejects(c.rpc('tie_lessons'),/sign in again/);assert.equal(c.auth,null);
 });
+test('wrong-password and unconfirmed-email errors have safe actionable messages',async()=>{
+  for(const [code,message] of [['invalid_credentials','Email or password is incorrect.'],['email_not_confirmed','Confirm your email before signing in.']]){
+    const c=new TieClient('https://a.com',key,async()=>({ok:false,status:400,json:async()=>({error_code:code,msg:'private detail'})}));
+    await assert.rejects(c.signIn('u@example.com','wrong'),e=>e.message===message&&e.status===400);
+  }
+});
+test('unknown error codes and server text are never reflected',async()=>{
+  for(const code of ['__proto__','<script>secret</script>']){
+    const c=new TieClient('https://a.com',key,async()=>({ok:false,status:400,json:async()=>({code,message:'private-token'})}));
+    await assert.rejects(c.signIn('u@example.com','wrong'),/^Error: Request failed \(400\)\.$/);
+  }
+});
+test('non-JSON errors and throttling keep safe fallbacks',async()=>{
+  for(const [status,message] of [[500,'Request failed (500).'],[429,'Too many requests. Please wait a few minutes and try again.']]){
+    const c=new TieClient('https://a.com',key,async()=>({ok:false,status,json:async()=>{throw new Error('private body')}}));
+    await assert.rejects(c.signIn('u@example.com','wrong'),e=>e.message===message);
+  }
+});
+test('signup and resend use the exact return page without query/fragment secrets',async()=>{
+  const calls=[];
+  const c=new TieClient('https://a.com',key,async(url,opts)=>{calls.push({url,body:JSON.parse(opts.body)});return response({user:{id:'u'}});});
+  await c.signUp('u@example.com','password','https://site.com/Learning-quiz/?secret=x#secret=y');
+  await c.resendConfirmation('u@example.com','https://site.com/Learning-quiz/');
+  for(const call of calls)assert.equal(new URL(call.url).searchParams.get('redirect_to'),'https://site.com/Learning-quiz/');
+  assert.deepEqual(calls[1].body,{type:'signup',email:'u@example.com'});
+});
+test('confirmation redirect validation refuses unsafe schemes and embedded credentials',()=>{
+  for(const url of ['javascript:alert(1)','http://public.example/','https://user:password@site.com/'])assert.throws(()=>TieClient.redirectQuery(url));
+  assert.ok(TieClient.redirectQuery('http://localhost:8000/'));
+});
+test('confirmation returns strip credentials without accepting a URL session',()=>{
+  const result=TieClient.authReturn('https://site.com/Learning-quiz/?view=tutor#access_token=secret&refresh_token=another&expires_in=3600&type=signup');
+  assert.equal(result.cleanURL,'https://site.com/Learning-quiz/?view=tutor');
+  assert.match(result.message,/Sign in to continue/);
+  assert.ok(!JSON.stringify(result).includes('secret'));
+});
+test('confirmation errors are sanitized and regular anchors are untouched',()=>{
+  const result=TieClient.authReturn('https://site.com/#error=access_denied&error_description=%3Cscript%3E&error_code=otp_expired');
+  assert.equal(result.cleanURL,'https://site.com/');assert.match(result.message,/invalid or expired/);assert.ok(!result.message.includes('script'));
+  assert.equal(TieClient.authReturn('https://site.com/#lesson'),null);
+});
