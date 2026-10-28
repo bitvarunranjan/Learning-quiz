@@ -1,0 +1,243 @@
+{
+  "questions": [
+    {
+      "id": "m1",
+      "stem": "What are the roots of x² − 5x + 6 = 0?",
+      "options": [
+        "1 and 6",
+        "2 and 3",
+        "−2 and −3",
+        "−1 and −6"
+      ],
+      "correct": 1,
+      "explanation": "(x − 2)(x − 3) = 0, so the roots are 2 and 3.",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "difficulty": "easy",
+      "pathway": "school",
+      "status": "approved",
+      "tutor": {
+        "hint": "Which pair has the required product and sum?",
+        "explanation": "For a monic quadratic, compare the sum and product of candidate roots with the coefficients. Both relationships must agree.",
+        "remediation": "Practice multiplying two binomials, then compare their middle and constant terms."
+      }
+    },
+    {
+      "id": "m2",
+      "stem": "For x² − 9 = 0, the sum of the real roots is:",
+      "options": [
+        "−9",
+        "0",
+        "3",
+        "9"
+      ],
+      "correct": 1,
+      "explanation": "The roots are +3 and −3; their sum is 0.",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "difficulty": "easy",
+      "pathway": "school",
+      "status": "approved",
+      "tutor": {
+        "hint": "A difference of squares gives roots with opposite signs. How do opposite quantities combine?",
+        "explanation": "Factoring a difference of squares gives a positive root and its negative counterpart. Combine both roots rather than using just one.",
+        "remediation": "Review additive inverses using equal positive and negative quantities."
+      }
+    },
+    {
+      "id": "m3",
+      "stem": "The discriminant of 2x² − 4x + 3 = 0 is:",
+      "options": [
+        "−8",
+        "8",
+        "−4",
+        "4"
+      ],
+      "correct": 0,
+      "explanation": "b² − 4ac = 16 − 24 = −8.",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "difficulty": "medium",
+      "pathway": "school",
+      "status": "approved",
+      "tutor": {
+        "hint": "Square the middle coefficient, then subtract the product involving the leading and constant coefficients.",
+        "explanation": "The discriminant compares the square of the middle coefficient with four times the product of the other coefficients. Keep track of signs.",
+        "remediation": "Write down each coefficient with its sign before applying the discriminant formula."
+      }
+    },
+    {
+      "id": "m4",
+      "stem": "If the roots of x² − 7x + k = 0 are 3 and 4, then k is:",
+      "options": [
+        "7",
+        "10",
+        "12",
+        "14"
+      ],
+      "correct": 2,
+      "explanation": "The product of roots is k = 3 × 4 = 12.",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "difficulty": "medium",
+      "pathway": "school",
+      "status": "approved",
+      "tutor": {
+        "hint": "Which relationship connects the constant term with the product of the roots?",
+        "explanation": "For a monic quadratic, the constant term equals the product of the roots. Use the given root values to check each candidate.",
+        "remediation": "Expand a pair of linear factors and identify the constant term."
+      }
+    },
+    {
+      "id": "m5",
+      "stem": "Which equation has exactly one distinct real root?",
+      "options": [
+        "x² + 1 = 0",
+        "x² − 4 = 0",
+        "x² − 2x + 1 = 0",
+        "x² − 5x + 6 = 0"
+      ],
+      "correct": 2,
+      "explanation": "(x − 1)² = 0 has a repeated real root.",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "difficulty": "hard",
+      "pathway": "school",
+      "status": "approved",
+      "tutor": {
+        "hint": "Look for an expression that is a perfect square.",
+        "explanation": "A quadratic has one distinct real root when its two linear factors are identical. Compare the structure of each expression.",
+        "remediation": "Review the expansion of a squared binomial and how a repeated factor behaves."
+      }
+    },
+    {
+      "id": "p1",
+      "stem": "Which House of the Indian Parliament is a continuing chamber?",
+      "options": [
+        "Lok Sabha",
+        "Rajya Sabha",
+        "Both Houses",
+        "Neither House"
+      ],
+      "correct": 1,
+      "explanation": "The Rajya Sabha is not subject to dissolution.",
+      "subject": "Indian Polity",
+      "topic": "Parliament",
+      "difficulty": "easy",
+      "pathway": "exam",
+      "status": "approved",
+      "tutor": {
+        "hint": "Which chamber uses staggered retirement rather than dissolving as a whole?",
+        "explanation": "A continuing chamber keeps its institutional existence while a portion of its membership retires periodically. Distinguish that from dissolution.",
+        "remediation": "Review the difference between dissolution of a chamber and retirement of individual members."
+      }
+    },
+    {
+      "id": "p2",
+      "stem": "A Money Bill can be introduced in:",
+      "options": [
+        "Either House",
+        "Rajya Sabha only",
+        "Lok Sabha only",
+        "A joint sitting"
+      ],
+      "correct": 2,
+      "explanation": "A Money Bill can be introduced only in the Lok Sabha.",
+      "subject": "Indian Polity",
+      "topic": "Parliament",
+      "difficulty": "medium",
+      "pathway": "exam",
+      "status": "approved",
+      "tutor": {
+        "hint": "Which chamber has primary responsibility for financial legislation?",
+        "explanation": "Money Bills follow a special introduction procedure giving the directly elected House primacy. Distinguish introduction from later consideration.",
+        "remediation": "Review the constitutional distinction between ordinary legislation and financial legislation."
+      }
+    },
+    {
+      "id": "s1",
+      "stem": "Which component commonly measures angular velocity in a drone?",
+      "options": [
+        "Gyroscope",
+        "Barometer",
+        "GPS receiver",
+        "Magnetometer"
+      ],
+      "correct": 0,
+      "explanation": "A gyroscope measures angular velocity.",
+      "subject": "Drone Technology",
+      "topic": "Flight Control",
+      "difficulty": "easy",
+      "pathway": "skill",
+      "status": "approved",
+      "tutor": {
+        "hint": "Think about a sensor that responds to rotation rather than pressure or position.",
+        "explanation": "Angular velocity describes rotation per unit time. Distinguish rotational sensing from pressure, satellite position and magnetic heading.",
+        "remediation": "Match each sensor category to the physical quantity it measures before choosing."
+      }
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "q1",
+      "title": "Quadratic Equations Practice",
+      "pathway": "school",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "mode": "practice",
+      "duration": 0,
+      "questionIds": [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5"
+      ],
+      "published": true
+    },
+    {
+      "id": "q2",
+      "title": "Mathematics Timed Exam",
+      "pathway": "school",
+      "subject": "Mathematics",
+      "topic": "Quadratic Equations",
+      "mode": "exam",
+      "duration": 180,
+      "questionIds": [
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5"
+      ],
+      "published": true
+    },
+    {
+      "id": "q3",
+      "title": "UPSC Polity Practice",
+      "pathway": "exam",
+      "subject": "Indian Polity",
+      "topic": "Parliament",
+      "mode": "practice",
+      "duration": 0,
+      "questionIds": [
+        "p1",
+        "p2"
+      ],
+      "published": true
+    },
+    {
+      "id": "q4",
+      "title": "Drone Skills Practice",
+      "pathway": "skill",
+      "subject": "Drone Technology",
+      "topic": "Flight Control",
+      "mode": "practice",
+      "duration": 0,
+      "questionIds": [
+        "s1"
+      ],
+      "published": true
+    }
+  ]
+}
