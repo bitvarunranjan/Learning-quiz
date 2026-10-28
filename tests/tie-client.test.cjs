@@ -96,3 +96,15 @@ test('confirmation errors are sanitized and regular anchors are untouched',()=>{
   assert.equal(result.cleanURL,'https://site.com/');assert.match(result.message,/invalid or expired/);assert.ok(!result.message.includes('script'));
   assert.equal(TieClient.authReturn('https://site.com/#lesson'),null);
 });
+test('bank catalog, quiz and educator publication routes are allowed',async()=>{
+  const calls=[];const c=new TieClient('https://a.com',key,async(url,opts)=>{calls.push([url,JSON.parse(opts.body)]);return response({});});c.auth=auth();
+  await c.rpc('tie_catalog');await c.rpc('tie_quiz_questions',{p_quiz_id:'q'});await c.rpc('tie_publish_bank',{p_payload:{questions:[],quizzes:[]}});
+  assert.deepEqual(calls.map(x=>x[0].split('/').pop()),['tie_catalog','tie_quiz_questions','tie_publish_bank']);
+  assert.equal(calls[1][1].p_quiz_id,'q');
+});
+test('RPC permission/content errors use fixed text instead of raw server messages',async()=>{
+  for(const [code,status] of [['42501',403],['22023',400],['54000',500]]){
+    const c=new TieClient('https://a.com',key,async()=>({ok:false,status,json:async()=>({code,message:'private answer key'})}));c.auth=auth();
+    await assert.rejects(c.rpc('tie_publish_bank'),e=>!e.message.includes('private')&&!e.message.includes('Request failed'));
+  }
+});

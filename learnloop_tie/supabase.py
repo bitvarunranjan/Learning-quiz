@@ -53,3 +53,12 @@ class SupabaseTutor:
 
     def history(self):
         return self._rpc('tie_history', {})
+
+    def catalog(self):
+        return self._rpc('tie_catalog', {})
+
+    def quiz_questions(self, quiz_id):
+        return self._rpc('tie_quiz_questions', {'p_quiz_id': quiz_id})
+
+    def publish_bank(self, payload):
+        return self._rpc('tie_publish_bank', {'p_payload': payload})

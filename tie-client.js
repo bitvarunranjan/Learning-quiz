@@ -40,7 +40,12 @@
             ['over_email_send_rate_limit', 'Too many confirmation emails requested. Please wait before trying again.']
           ]);
           // Never echo arbitrary server messages, HTML, email addresses or tokens.
-          const known = path.startsWith('/auth/v1/') ? messages.get(code) : null;
+          const rpcMessage = path.startsWith('/rest/v1/rpc/') ? new Map([
+            ['42501','This account cannot perform that action. Publishing requires an approved educator account.'],
+            ['22023','The content is unavailable, has changed, or contains invalid fields. Refresh and try again.'],
+            ['54000','The practice storage limit has been reached. Contact the LearnLoop owner.']
+          ]).get(code) : null;
+          const known = (path.startsWith('/auth/v1/') ? messages.get(code) : null) || rpcMessage;
           const fallback = res.status === 429 ? 'Too many requests. Please wait a few minutes and try again.' :
             res.status === 401 ? 'Please sign in again.' : `Request failed (${res.status}).`;
           const err = new Error(known || fallback);
@@ -99,7 +104,7 @@
       return this.auth.access_token;
     }
     async rpc(name, body = {}) {
-      if (!['tie_lessons','tie_start','tie_submit','tie_get','tie_history'].includes(name)) throw new Error('Unsupported tutor operation.');
+      if (!['tie_lessons','tie_start','tie_submit','tie_get','tie_history','tie_catalog','tie_quiz_questions','tie_publish_bank'].includes(name)) throw new Error('Unsupported tutor operation.');
       try { return await this.request('/rest/v1/rpc/' + name, body, await this.token()); }
       catch (err) { if (err.status === 401) this.auth = null; throw err; }
     }
