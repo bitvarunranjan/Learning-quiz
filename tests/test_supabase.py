@@ -40,3 +40,13 @@ class ClientTests(unittest.TestCase):
         open_url.side_effect = URLError('private detail')
         with self.assertRaisesRegex(RuntimeError, '^Tutor network request failed$'):
             self.client.lessons()
+
+class BankClientTests(unittest.TestCase):
+    @patch('learnloop_tie.supabase.urlopen')
+    def test_bank_routes(self, open_url):
+        open_url.side_effect=lambda *a, **k: io.BytesIO(b'{}')
+        client=SupabaseTutor('https://example.supabase.co','public-key','user-token')
+        client.catalog(); client.quiz_questions('quiz'); client.publish_bank({'questions':[],'quizzes':[]})
+        calls=open_url.call_args_list
+        self.assertEqual([x.args[0].full_url.rsplit('/',1)[1] for x in calls], ['tie_catalog','tie_quiz_questions','tie_publish_bank'])
+        self.assertEqual(json.loads(calls[1].args[0].data), {'p_quiz_id':'quiz'})
