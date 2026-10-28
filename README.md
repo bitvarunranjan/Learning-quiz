@@ -18,7 +18,7 @@ Open **Cloud Tutor · Guided practice** at the top. Sign in with a Supabase emai
 account or select Create account. If email confirmation is enabled, confirm your
 email before signing in. Use **Resend confirmation** if needed. Confirmation links
 return to the deployed page; credentials are removed from the return URL and you
-sign in with your password. Select **Combining groups**, then Start lesson. Incorrect
+sign in with your password. Select a published practice set or the approved question bank, choose a question, then Start lesson. Select an option and send your response. After completion, Next question advances within the selected set. **Combining groups** remains available as a sample. Incorrect
 responses move through a hint, explanation and remediation. A correct response
 asks you to check your reasoning; another consecutive correct response completes
 practice. Recent cloud sessions can be resumed after signing in again.
@@ -31,8 +31,7 @@ Use HTTPS when hosting the app; localhost is suitable for development.
 The original Student/Teacher/Admin demo remains below the Cloud Tutor panel:
 import example_import.json, approve questions, publish quizzes, practice, take
 local timed exams, and inspect local analytics. It still uses simulated roles
-and browser localStorage. Cloud Tutor does not upload or sync that question bank,
-exam results, or demo analytics. The two datasets are visibly separate.
+and browser localStorage. Cloud Tutor now uses the approved question bank and published practice quizzes in Supabase. The initial import contains eight questions and four published quizzes; three practice quizzes appear in Cloud Tutor, while the timed exam remains separate. Offline edits remain local until an authorized educator explicitly publishes them. Exam results and demo analytics are not uploaded.
 
 ## Architecture
 
@@ -131,10 +130,13 @@ Authenticated JSON POST endpoints under `/rest/v1/rpc/`:
 
 | Endpoint | JSON body | Response |
 | --- | --- | --- |
-| tie_lessons | `{}` | reviewed `{id,title}` records |
+| tie_catalog | `{}` | reviewed lessons, published practice quizzes, publisher capability |
+| tie_quiz_questions | `{p_quiz_id}` | ordered question metadata without grading keys |
+| tie_publish_bank | `{p_payload}` | validated import counts; authorized educators only |
+| tie_lessons | `{}` | reviewed lesson metadata |
 | tie_start | `{p_session_id,p_lesson_id}` | `{session_id,decision}`; a retry also returns prompt/lesson_id |
 | tie_submit | `{p_session_id,p_response,p_request_id}` | decision |
-| tie_get | `{p_session_id}` | `{session_id,lesson_id,prompt,decision}` |
+| tie_get | `{p_session_id}` | `{session_id,lesson_id,prompt,options,decision}` |
 | tie_history | `{}` | latest 20 owned sessions, counts and completion |
 
 IDs for sessions and requests are UUIDs. Reuse IDs and the exact same body after
@@ -155,19 +157,34 @@ all tables have RLS and no direct anon/authenticated table privileges. Public RP
 wrappers are security invokers. Narrow security-definer implementations live in
 the private schema, use an empty search_path, and check auth.uid() ownership.
 
-The SQL adds only TIE objects and a reviewed sample lesson. Existing quiz tables,
-authentication settings, users and offline data are not migrated or rewritten.
-An administrator can author more lessons directly in tie_private.lessons using
-trusted SQL. All text must be reviewed and `approved=true` explicitly set.
-Optionally link `question_id` to an existing public.questions row: the linked
-question must remain approved/published to list, start, resume or submit the
-lesson. This is an explicit publishing boundary, not automatic question syncing.
-Lesson content is snapshotted when practice starts; unapproving a lesson revokes
-further use of its existing sessions. Editing text affects new sessions only.
+For a NEW deployment, apply `supabase/tie_v01.sql`, then
+`supabase/tie_bank.sql` once. Both are already installed here. The bank update
+was applied as migrations `learnloop_bank_schema`, `learnloop_bank_rpc`, followed
+by the content seed. Do not repeat these scripts on the existing deployment.
+The import source is `content/learnloop-bank.json`.
+
+Cloud Tutor reads approved questions through reviewed private lessons. Published
+practice quizzes are shown only when every linked question is eligible, in quiz
+order. Withdrawn quizzes leave the set list; approved individual questions remain
+available in the bank. Editing a source question invalidates its lesson until
+republished, and stale session snapshots are rejected. Each session practices one
+question; this is not a formal graded quiz attempt. Recent completion indicators
+cover the latest 20 sessions, not lifetime progress.
+
+The Teacher workspace's Publish approved bank to Cloud Tutor action exports only
+approved questions and published quizzes. It requires a real authenticated account
+with a trusted teacher/admin profile or a verified email explicitly allowlisted
+by an administrator. Demo roles and user-supplied Auth metadata grant no rights.
+No owner email has been granted publishing permission. The publisher API validates
+all records atomically, reuses unchanged builtin records, and rejects duplicate
+options, invalid keys, and answer-revealing instructional text. Optional `tutor`
+hint/explanation/remediation fields support reviewed instructions; otherwise
+answer-free generic instructions are used. Original quiz explanations are never
+copied into pre-answer feedback.
 
 Guardrails normalize and check EVERY feedback message against answer aliases at
 whole-token boundaries; an overlap returns a blocked decision with an empty
-message. The initial prompt and catalog title are also filtered. Literal matches
+message. Catalog titles and free-response prompts are also filtered. Reviewed multiple-choice prompts and choice texts are stimulus and may contain the correct answer; the API never labels which choice is correct. Literal matches
 handle regex metacharacters safely. The override detector recognizes a narrow
 set of instruction-changing requests. Learner responses are never executed or
 interpolated into messages. Hosted response text is not stored: retry records
@@ -181,7 +198,7 @@ no generative model, open-ended answer grading, partial credit, or exam security
 
 Database advisor INFO notices about RLS without policies are expected for these
 private default-deny tables; client access is solely through checked functions.
-The same pre-existing INFO notices remain for the old empty question/quiz tables.
+The existing public question/quiz tables also remain default-deny.
 See [Supabase's explanation](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
 
 ## Tests
@@ -194,7 +211,7 @@ node --check tie-ui.js
 ```
 
 A GitHub Actions workflow is included to run these checks after publishing. No Supabase credentials are needed for unit
-checks. `tests/database_checks.sql` runs against a configured database as admin;
+checks. `tests/database_checks.sql` and `tests/bank_database_checks.sql` run against a configured database as admin;
 it uses authenticated roles/JWT claims and rolls back all fixture accounts and
 rows. Do not replace it with a test on real learner records.
 `python3 -B tests/live_http_checks.py` makes read-only calls to the configured
@@ -211,11 +228,8 @@ node tests/browser-smoke.cjs
 The browser suite mocks cloud responses and tests login, start, replay after a
 network failure, verification, resume, sign-out, token storage, mobile overflow,
 and the original offline quiz flow. It is not a live account sign-in test.
-All verified counts, limitations, and publishing status are in VERIFIED_RESULTS.md.
-The integration is published on the feat/learnloop-tie-v01 review branch.
-Main and website hosting are separate from this review branch. The GitHub
-connector still lacks app-installation access; publishing used the signed-in
-GitHub browser session. See PUBLISHING.md for future publishing options.
+Bank integration checks and limitations are in BANK_INTEGRATION_RESULTS.md.
+See PUBLISHING.md for operational details.
 
 Live signup/login/lesson verification and subsequent authentication fixes are
 recorded in LIVE_E2E_RESULTS.md.
